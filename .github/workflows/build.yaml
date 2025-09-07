@@ -80,8 +80,8 @@ jobs:
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v3
     
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
 
       - name: Prepare
         shell: bash
@@ -97,7 +97,7 @@ jobs:
           sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
-          sed -i '/^FROM scratch/a \\\nARG TARGETARCH' $BINARIES_DOCKERFILES
+          sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILES
           sed -i -E '/COPY.*--from/s/$/_$TARGETARCH/' $BINARIES_DOCKERFILE
           # Output for logging
           cat $BINARIES_DOCKERFILE
