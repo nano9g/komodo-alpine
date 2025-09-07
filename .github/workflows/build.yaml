@@ -44,8 +44,12 @@ jobs:
           echo "$GITHUB_API_URL"
           echo "$GITHUB_REPOSITORY"
 
+          curl --no-progress-meter "${GITHUB_API_URL}/repos/moghtech/komodo/releases?per_page=1"
+
           komodo_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/moghtech/komodo/releases?per_page=1" | grep '"tag_name":' | grep -Eo "v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+")
+          echo "komodo_tag: $komodo_tag"
           our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | grep '"tag_name":' | grep -Eo "v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+")
+          echo "our_tag: $our_tag"
 
           if [[ "$komodo_tag" != "$our_tag" ]]; then
             should_run=true
