@@ -153,6 +153,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
+        working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         with:
           body: test
           files: ${{ steps.compress.outputs.artifacts }}
