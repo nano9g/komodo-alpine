@@ -86,6 +86,9 @@ jobs:
       - name: Prepare
         shell: bash
         run: |
+          echo "$BINARIES_DOCKERFILE"
+          ls "$BINARIES_DOCKERFILE"
+          echo "----"
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
           echo -e "-----\nModified Dockerfile\n------\n"
