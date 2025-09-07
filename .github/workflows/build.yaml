@@ -104,30 +104,30 @@ jobs:
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
-      # - name: Build Komodo binaries
-      #   working-directory: ${{ github.workspace }}/komodo
-      #   run: |
-      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
-
-      # - name: Check result
-      #   working-directory: ${{ github.workspace }}/komodo
-      #   run: |
-      #     ls -l
-      #     echo "------"
-      #     ls -l $OUTPUT_FOLDER
-
-      - name: Checkout komodo-alpine
-        uses: actions/checkout@v4
-        with:
-          path: komodo-alpine
-
-      - name: Create tag
-        shell: bash
-        working-directory: ${{ github.workspace }}/komodo-alpine
+      - name: Build Komodo binaries
+        working-directory: ${{ github.workspace }}/komodo
         run: |
-          cd $GITHUB_WORKSPACE/komodo-alpine
-          git config --global user.name '${{ github.actor }}'
-          git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
-          git tag -l
-          git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
-          git push origin ${{ needs.release-check.outputs.komodo_tag }}
+          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+
+      - name: Check result
+        working-directory: ${{ github.workspace }}/komodo
+        run: |
+          ls -l
+          echo "------"
+          ls -l $OUTPUT_FOLDER
+
+      # - name: Checkout komodo-alpine
+      #   uses: actions/checkout@v4
+      #   with:
+      #     path: komodo-alpine
+
+      # - name: Create tag
+      #   shell: bash
+      #   working-directory: ${{ github.workspace }}/komodo-alpine
+      #   run: |
+      #     cd $GITHUB_WORKSPACE/komodo-alpine
+      #     git config --global user.name '${{ github.actor }}'
+      #     git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
+      #     git tag -l
+      #     git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
+      #     git push origin ${{ needs.release-check.outputs.komodo_tag }}
