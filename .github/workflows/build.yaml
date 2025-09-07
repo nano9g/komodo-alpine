@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           echo "Updating Dockerfile with Alpine build dependencies"
-          sed -i "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
+          sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           sed -i "/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
