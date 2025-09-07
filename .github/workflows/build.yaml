@@ -105,9 +105,9 @@ jobs:
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           echo 5
-          sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILES
+          sed -i '' -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILES
           echo 6
-          sed -i '' -E '/COPY.*--from/s/$/_$TARGETARCH/' $BINARIES_DOCKERFILE
+          sed -i -E '/COPY.*--from/s/$/_$TARGETARCH/' $BINARIES_DOCKERFILE
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
