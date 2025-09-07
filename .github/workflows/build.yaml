@@ -11,7 +11,7 @@ env:
   OUTPUT_FOLDER: __build
 
 jobs:
-  check-bats-version:
+  komodo-build:
     runs-on: ubuntu-latest
     steps:
 
