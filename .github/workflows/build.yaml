@@ -7,12 +7,22 @@ on:
 env:
   # Path (in the Komodo repo) to the file that will be passed to "docker buildx build"
   BINARIES_DOCKERFILE: bin/binaries.Dockerfile
+  
+  # Lines to remove from the Dockerfile for things we aren't building
+  # These will be used in a regex, so separate multiple items with a pipe |
+  # Matching "cargo build -p komodo_<DOCKERFILE_CARGO_BUILD_REMOVE> --release && \"
+  DOCKERFILE_CARGO_BUILD_REMOVE: 'core|cli'
+  # Matching "COPY --from=builder /builder/target/release/<DOCKERFILE_COPY_FROM_BUILDER_REMOVE> /km"
+  DOCKERFILE_COPY_FROM_BUILDER_REMOVE: 'core|km'
+  
   # Architectures (--platform argument for "docker buildx build")
   # Non-native requires QEMU
   #BUILD_PLATFORM: linux/amd64,linux/arm64
   BUILD_PLATFORM: linux/amd64
+  
   # Subfolder for build artifacts
   OUTPUT_FOLDER: __build
+  
   # Rust Alpine Docker image tag suffix (rust:X.Y.Z-alpineX.Y)
   ALPINE_IMAGE_TAG: alpine3.22
 
@@ -38,14 +48,14 @@ jobs:
         run: |
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
-          echo "Updating Dockerfile with Alpine build dependencies"
+          echo -e "-----\nModified Dockerfile\n------\n"
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           sed -i "/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
-          # No need to build Komodo Core
+          # Remove commands for things we're not building
           # Preserve continuations for build commands (&& \) to avoid errors if things are reorderd
           sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
-          echo -e "-----\nModified Dockerfile\n------\n"
+          # Output for logging
           cat $BINARIES_DOCKERFILE
 
       - name: Build Komodo binaries
