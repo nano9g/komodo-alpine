@@ -104,30 +104,56 @@ jobs:
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
-      - name: Build Komodo binaries
-        working-directory: ${{ github.workspace }}/komodo
-        run: |
-          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+          # Testing only
+          echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_aarch64"
+          echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_amd64"
 
-      - name: Check result
-        working-directory: ${{ github.workspace }}/komodo
-        run: |
-          ls -l
-          echo "------"
-          ls -l $OUTPUT_FOLDER
-
-      # - name: Checkout komodo-alpine
-      #   uses: actions/checkout@v4
-      #   with:
-      #     path: komodo-alpine
-
-      # - name: Create tag
-      #   shell: bash
-      #   working-directory: ${{ github.workspace }}/komodo-alpine
+      # - name: Build Komodo binaries
+      #   working-directory: ${{ github.workspace }}/komodo
       #   run: |
-      #     cd $GITHUB_WORKSPACE/komodo-alpine
-      #     git config --global user.name '${{ github.actor }}'
-      #     git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
-      #     git tag -l
-      #     git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
-      #     git push origin ${{ needs.release-check.outputs.komodo_tag }}
+      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+      
+      # Compress each executable in the build folder into its own .tar.gz,
+      # renaming to remove the "_<architecture>" suffix beforehand
+      - name: Compress artifacts
+        id: compress
+        working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
+        run: |
+          # We need a multiline string for softprops/action-gh-release, so the start
+          # and delimiter are output here, then archive names are output in the loop,
+          # and finally closed afterwards
+          echo 'artifacts<<EOF' >> $GITHUB_OUTPUT
+          for filename in ./*; do
+              [ -e "$filename" ] || continue
+              newname=${filename%_*}
+              archive="${filename}.tar.gz"
+              mv $filename $newname
+              echo $archive
+              tar -czvf $archive -C ./ $newname
+              echo $archive >> $GITHUB_OUTPUT
+              mv $newname $filename
+          done
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: komodo-alpine
+
+      - name: Create tag
+        shell: bash
+        working-directory: ${{ github.workspace }}/komodo-alpine
+        run: |
+          cd $GITHUB_WORKSPACE/komodo-alpine
+          git config --global user.name '${{ github.actor }}'
+          git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
+          git tag -l
+          git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
+          git push origin ${{ needs.release-check.outputs.komodo_tag }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: test
+          files: ${{ steps.compress.outputs.artifacts }}
+          tag: ${{ needs.release-check.outputs.komodo_tag }}
