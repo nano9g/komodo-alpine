@@ -93,19 +93,19 @@ jobs:
           mkdir -p $OUTPUT_FOLDER
           echo -e "-----\nModified Dockerfile\n------\n"
           echo 1
-          sed -i '' -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
+          sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           # Alpine build deps
           echo 2
           sed -i "/^WORKDIR \/builder/i ARG TARGETARCH\nRUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
           # Preserve continuations for build commands (&& \) to avoid errors if things are reorderd
           echo 3
-          sed -i '' -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
+          sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
           echo 4
-          sed -i '' -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
+          sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           echo 5
-          sed -i '' -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILES
+          sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILES
           echo 6
           sed -i '' -E '/COPY.*--from/s/$/_$TARGETARCH/' $BINARIES_DOCKERFILE
           # Output for logging
