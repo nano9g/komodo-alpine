@@ -129,5 +129,5 @@ jobs:
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git tag -l
-          git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":bookmark: ${{ needs.release-check.outputs.komodo_tag }}"
+          git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
           git push origin ${{ needs.release-check.outputs.komodo_tag }}
