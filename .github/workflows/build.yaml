@@ -1,0 +1,44 @@
+name: komodo-alpine-build
+run-name: Build Komodo binaries for Alpine
+
+on:
+  workflow_dispatch:
+
+env:
+  # Path (in the Komodo repo) to the file that will be passed to "docker buildx"
+  BINARIES_DOCKERFILE: bin/binaries.Dockerfile
+  # Subfolder for build artifacts
+  OUTPUT_FOLDER: __build
+
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: moghtech/komodo
+          ref: v1.19.3
+    
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare
+        shell: bash
+        run: |
+          echo "Updating Dockerfile with Alpine build dependencies"
+          sed -i '/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n' $BINARIES_DOCKERFILE
+          echo "Creating build artifact folder"
+          mkdir -p $OUTPUT_FOLDER
+
+      - name: Build Komodo binaries
+        run: |
+          docker buildx build -f $BINARIES_DOCKERFILE --output type=local,dest=$OUTPUT_FOLDER .
+
+      - name: Check result
+        run: |
+          ls -l
+          echo "------"
+          ls -l $OUTPUT_FOLDER
+          echo "------"
