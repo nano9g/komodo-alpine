@@ -9,6 +9,8 @@ env:
   BINARIES_DOCKERFILE: bin/binaries.Dockerfile
   # Subfolder for build artifacts
   OUTPUT_FOLDER: __build
+  # Rust Alpine Docker image tag suffix (rust:X.Y.Z-alpineX.Y)
+  ALPINE_IMAGE_TAG: alpine3.22
 
 jobs:
   komodo-build:
@@ -28,7 +30,8 @@ jobs:
         shell: bash
         run: |
           echo "Updating Dockerfile with Alpine build dependencies"
-          sed -i '/^WORKDIR \/builder/i RUN apk add --update musl-dev\n' $BINARIES_DOCKERFILE
+          sed -i "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
+          sed -i "/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
 
