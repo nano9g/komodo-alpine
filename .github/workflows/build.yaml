@@ -19,8 +19,8 @@ env:
   
   # Architectures (--platform argument for "docker buildx build")
   # Non-native requires QEMU
-  #BUILD_PLATFORM: linux/amd64,linux/arm64
-  BUILD_PLATFORM: linux/amd64
+  BUILD_PLATFORM: linux/amd64,linux/arm64
+  #BUILD_PLATFORM: linux/amd64
   
   # Subfolder for build artifacts
   OUTPUT_FOLDER: __build
@@ -83,25 +83,29 @@ jobs:
           ref: ${{ needs.release-check.outputs.komodo_tag }}
           path: komodo
 
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
     
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Prepare
         shell: bash
         working-directory: ${{ github.workspace }}/komodo
         run: |
+
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
+
+          # Update Dockerfile
           echo -e "-----\nModified $BINARIES_DOCKERFILE\n------\n"
+          # Build using the Alpine image (obvs)
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           # Alpine build deps
           sed -i "/^WORKDIR \/builder/i ARG TARGETARCH\nRUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
           # Preserve continuations for build commands (&& \) to avoid errors if things are reordered
-          sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
+          sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo "Skipping \1"\2/' $BINARIES_DOCKERFILE
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILE
@@ -109,14 +113,14 @@ jobs:
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
-          # Testing only
-          echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_aarch64"
-          echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_amd64"
+          # Release testing (avoid build step)
+          # echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_aarch64"
+          # echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_amd64"
 
-      # - name: Build Komodo binaries
-      #   working-directory: ${{ github.workspace }}/komodo
-      #   run: |
-      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+      - name: Build Komodo binaries
+        working-directory: ${{ github.workspace }}/komodo
+        run: |
+          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_<architecture>" suffix beforehand
@@ -154,6 +158,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: |
-            See [Komodo release notes](${{ needs.release-check.outputs.komodo_release_url }}).
+            These are prebuilt [Komodo](https://komo.do) binaries for Alpine.
+            
+            Refer to the [official Komodo release](${{ needs.release-check.outputs.komodo_release_url }}) for changelog and other platforms.
           files: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
           tag_name: ${{ needs.release-check.outputs.komodo_tag }}
