@@ -71,11 +71,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
 
-      - name: Checkout
+      - name: Checkout current Komodo release
         uses: actions/checkout@v4
         with:
           repository: ${{ env.KOMODO_REPO }}
           ref: ${{ needs.release-check.outputs.komodo_tag }}
+          path: komodo
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v3
@@ -85,6 +86,7 @@ jobs:
 
       - name: Prepare
         shell: bash
+        working-directory: ${{ github.workspace }}/komodo
         run: |
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
@@ -93,7 +95,7 @@ jobs:
           # Alpine build deps
           sed -i "/^WORKDIR \/builder/i ARG TARGETARCH\nRUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
-          # Preserve continuations for build commands (&& \) to avoid errors if things are reorderd
+          # Preserve continuations for build commands (&& \) to avoid errors if things are reordered
           sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' $BINARIES_DOCKERFILE
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
@@ -103,19 +105,29 @@ jobs:
           cat $BINARIES_DOCKERFILE
 
       # - name: Build Komodo binaries
+      #   working-directory: ${{ github.workspace }}/komodo
       #   run: |
       #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
 
       # - name: Check result
+      #   working-directory: ${{ github.workspace }}/komodo
       #   run: |
       #     ls -l
       #     echo "------"
       #     ls -l $OUTPUT_FOLDER
 
+      - name: Checkout komodo-alpine
+        uses: actions/checkout@v4
+        with:
+          path: komodo-alpine
+
       - name: Create tag
         shell: bash
+        working-directory: ${{ github.workspace }}/komodo-alpine
         run: |
+          cd $GITHUB_WORKSPACE/komodo-alpine
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
+          git tag -l
           git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":bookmark: ${{ needs.release-check.outputs.komodo_tag }}"
           git push origin ${{ needs.release-check.outputs.komodo_tag }}
