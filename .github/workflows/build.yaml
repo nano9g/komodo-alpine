@@ -42,8 +42,9 @@ jobs:
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           sed -i "/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # No need to build Komodo Core
-          #sed -i -E '/cargo build.*core|COPY.*--from.*core/d' $BINARIES_DOCKERFILE
-          sed -i -E '/cargo build.*komodo_(core|cli)|COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
+          # Preserve continuations for build commands (&& \) to avoid errors if things are reorderd
+          sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo ""\2/' ./binaries.Dockerfile
+          sed -i -E '/COPY.*--from.*\/(core|km)/d' ./binaries.Dockerfile
           echo -e "-----\nModified Dockerfile\n------\n"
           cat $BINARIES_DOCKERFILE
 
