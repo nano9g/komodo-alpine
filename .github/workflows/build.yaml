@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |
           echo "Updating Dockerfile with Alpine build dependencies"
-          sed -i '/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n' $BINARIES_DOCKERFILE
+          sed -i '/^WORKDIR \/builder/i RUN apk add --update musl-dev\n' $BINARIES_DOCKERFILE
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
 
