@@ -33,7 +33,7 @@ jobs:
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           sed -i "/^WORKDIR \/builder/i RUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # No need to build Komodo Core
-          sed -i -E '/cargo build.*core|COPY.*core/d' $BINARIES_DOCKERFILE
+          sed -i -E '/cargo build.*core|COPY.*--from.*core/d' $BINARIES_DOCKERFILE
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
 
