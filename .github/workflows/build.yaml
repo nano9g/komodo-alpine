@@ -119,10 +119,6 @@ jobs:
         id: compress
         working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         run: |
-          # We need a multiline string for softprops/action-gh-release, so the start
-          # and delimiter are output here, then archive names are output in the loop,
-          # and finally closed afterwards
-          echo 'artifacts<<EOF' >> $GITHUB_OUTPUT
           for filename in ./*; do
               [ -e "$filename" ] || continue
               newname=${filename%_*}
@@ -130,10 +126,8 @@ jobs:
               mv $filename $newname
               echo $archive
               tar -czvf $archive -C ./ $newname
-              echo $archive >> $GITHUB_OUTPUT
               mv $newname $filename
           done
-          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Checkout this repo
         uses: actions/checkout@v4
@@ -153,8 +147,7 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         with:
           body: test
-          files: ${{ steps.compress.outputs.artifacts }}
+          files: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
           tag_name: ${{ needs.release-check.outputs.komodo_tag }}
