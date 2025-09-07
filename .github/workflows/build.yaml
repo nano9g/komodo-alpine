@@ -156,4 +156,4 @@ jobs:
         with:
           body: test
           files: ${{ steps.compress.outputs.artifacts }}
-          tag: ${{ needs.release-check.outputs.komodo_tag }}
+          tag_name: ${{ needs.release-check.outputs.komodo_tag }}
