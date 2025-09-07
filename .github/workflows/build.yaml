@@ -44,16 +44,16 @@ jobs:
           # No need to build Komodo Core
           #sed -i -E '/cargo build.*core|COPY.*--from.*core/d' $BINARIES_DOCKERFILE
           sed -i -E '/cargo build.*komodo_(core|cli)|COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
-          echo -e "Modified Dockerfile\n\n"
+          echo -e "-----\nModified Dockerfile\n------\n"
           cat $BINARIES_DOCKERFILE
 
-      # - name: Build Komodo binaries
-      #   run: |
-      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+      - name: Build Komodo binaries
+        run: |
+          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
 
-      # - name: Check result
-      #   run: |
-      #     ls -l
-      #     echo "------"
-      #     ls -l $OUTPUT_FOLDER
-      #     echo "------"
+      - name: Check result
+        run: |
+          ls -l
+          echo "------"
+          ls -l $OUTPUT_FOLDER
+          echo "------"
