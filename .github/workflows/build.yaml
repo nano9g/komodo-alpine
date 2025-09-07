@@ -5,8 +5,12 @@ on:
   workflow_dispatch:
 
 env:
-  # Path (in the Komodo repo) to the file that will be passed to "docker buildx"
+  # Path (in the Komodo repo) to the file that will be passed to "docker buildx build"
   BINARIES_DOCKERFILE: bin/binaries.Dockerfile
+  # Architectures (--platform argument for "docker buildx build")
+  # Non-native requires QEMU
+  #BUILD_PLATFORM: linux/amd64,linux/arm64
+  BUILD_PLATFORM: linux/amd64
   # Subfolder for build artifacts
   OUTPUT_FOLDER: __build
   # Rust Alpine Docker image tag suffix (rust:X.Y.Z-alpineX.Y)
@@ -22,6 +26,9 @@ jobs:
         with:
           repository: moghtech/komodo
           ref: v1.19.3
+
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
     
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,14 +43,15 @@ jobs:
           sed -i -E '/cargo build.*core|COPY.*--from.*core/d' $BINARIES_DOCKERFILE
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
+          cat $BINARIES_DOCKERFILE
 
-      - name: Build Komodo binaries
-        run: |
-          docker buildx build -f $BINARIES_DOCKERFILE --output type=local,dest=$OUTPUT_FOLDER .
+      # - name: Build Komodo binaries
+      #   run: |
+      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
 
-      - name: Check result
-        run: |
-          ls -l
-          echo "------"
-          ls -l $OUTPUT_FOLDER
-          echo "------"
+      # - name: Check result
+      #   run: |
+      #     ls -l
+      #     echo "------"
+      #     ls -l $OUTPUT_FOLDER
+      #     echo "------"
