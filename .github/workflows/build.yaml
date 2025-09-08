@@ -2,6 +2,12 @@ name: komodo-alpine-build
 run-name: Build Komodo binaries for Alpine
 
 on:
+  # There's no way to trigger on push to another repo, so we're going to run the
+  # release-check job periodically, which will determine whether the rest of the
+  # workflow needs to run
+  schedule:
+    - cron: '15 */4 * * *'
+
   workflow_dispatch:
 
 env:
@@ -11,19 +17,11 @@ env:
   BINARIES_DOCKERFILE: bin/binaries.Dockerfile
   
   # Lines to remove from the Dockerfile for things we aren't building
-  # These will be used in a regex, so separate multiple items with a pipe |
+  # (Will be used in a regex, so separate multiple items with a pipe |)
   # Matching "cargo build -p komodo_<DOCKERFILE_CARGO_BUILD_REMOVE> --release && \"
   DOCKERFILE_CARGO_BUILD_REMOVE: 'core|cli'
   # Matching "COPY --from=builder /builder/target/release/<DOCKERFILE_COPY_FROM_BUILDER_REMOVE> /km"
   DOCKERFILE_COPY_FROM_BUILDER_REMOVE: 'core|km'
-  
-  # Architectures (--platform argument for "docker buildx build")
-  # Non-native requires QEMU
-  #BUILD_PLATFORM: linux/amd64,linux/arm64
-  #BUILD_PLATFORM: linux/${{ matrix.job.arch }}
-  
-  # Subfolder for build artifacts
-  OUTPUT_FOLDER: __build
   
   # Rust Alpine Docker image tag suffix (rust:X.Y.Z-alpineX.Y)
   ALPINE_IMAGE_TAG: alpine3.22
@@ -55,14 +53,14 @@ jobs:
           tag_to_create=$komodo_tag
 
           # Force run for testing
-          tag_to_create=$(date +%s)
+          #tag_to_create=$(date +%s)
           
           if [[ "$komodo_tag" != "$tag_to_create" ]]; then
             should_run=true
           fi
 
           echo "Komodo tag: $komodo_tag"
-          echo "Our tag: $our_tag"
+          echo "Our latest tag: $our_tag"
           echo "Tag to create: $tag_to_create"
           echo "Should run?: $should_run"
 
@@ -81,6 +79,8 @@ jobs:
     
     env:
       BUILD_PLATFORM: linux/${{ matrix.arch }}
+      # Subfolder for build artifacts so we can place them in a known location
+      OUTPUT_FOLDER: __build
 
     # Using a matrix so we can build with native runners instead of using QEMU emulation (native is literally 10x faster)
     strategy:
@@ -133,10 +133,13 @@ jobs:
         working-directory: ${{ github.workspace }}/komodo
         run: |
           echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
+          # Outputting to local causes the final COPY lines in the Dockerfile to copy
+          # files into the specified dest instead of the scratch image.
           docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_<architecture>" suffix beforehand
+      # (so periphery_amd64 will be named periphery in the archive)
       - name: Compress artifacts
         working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         run: |
@@ -205,9 +208,6 @@ jobs:
           files: ${{ github.workspace }}/artifacts/*
           tag_name: ${{ needs.release-check.outputs.tag_to_create }}
 
+      # No reason to keep uploaded artifacts around since they've just been attached to the release
       - name: Delete artifacts
         uses: joutvhu/delete-artifact@v2
-        # uses: geekyeggo/delete-artifact@v5
-        # with:
-        #   name: "*"
-        #   useGlob: true
