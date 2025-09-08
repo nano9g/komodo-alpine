@@ -82,6 +82,7 @@ jobs:
     env:
       BUILD_PLATFORM: linux/${{ matrix.arch }}
 
+    # Using a matrix so we can build with native runners instead of using QEMU emulation (native is literally 10x faster)
     strategy:
       matrix:
         include:
@@ -158,6 +159,7 @@ jobs:
           overwrite: true
 
 
+  # Release with build artifacts, only invoked on successful builds
   create-release:
     name: Create release
     runs-on: ubuntu-latest
