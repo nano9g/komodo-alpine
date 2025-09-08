@@ -78,6 +78,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: release-check
     if: needs.release-check.outputs.should_run == 'true'
+    
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
 
     strategy:
       matrix:
@@ -99,8 +102,6 @@ jobs:
       - name: Prepare
         shell: bash
         working-directory: ${{ github.workspace }}/komodo
-        env:
-          BUILD_PLATFORM: linux/${{ matrix.arch }}
         run: |
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
