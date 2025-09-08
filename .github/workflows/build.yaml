@@ -102,8 +102,6 @@ jobs:
         env:
           BUILD_PLATFORM: linux/${{ matrix.arch }}
         run: |
-          echo "BUILD_PLATFORM: $BUILD_PLATFORM"
-
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
 
@@ -125,8 +123,6 @@ jobs:
 
           # Artifact testing (avoid build step)
           #echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_$RUNNER_ARCH"
-          
-          exit 1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
