@@ -37,6 +37,7 @@ jobs:
       should_run: ${{ steps.check.outputs.should_run }}
       komodo_tag: ${{ steps.check.outputs.komodo_tag }}
       komodo_release_url: ${{ steps.check.outputs.komodo_release_url }}
+      tag_to_create: ${{ steps.check.outputs.tag_to_create }}
 
     steps:
       - name: Check
