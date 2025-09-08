@@ -20,7 +20,7 @@ env:
   # Architectures (--platform argument for "docker buildx build")
   # Non-native requires QEMU
   #BUILD_PLATFORM: linux/amd64,linux/arm64
-  BUILD_PLATFORM: linux/${{ matrix.job.arch }}
+  #BUILD_PLATFORM: linux/${{ matrix.job.arch }}
   
   # Subfolder for build artifacts
   OUTPUT_FOLDER: __build
@@ -78,6 +78,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: release-check
     if: needs.release-check.outputs.should_run == 'true'
+
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.job.arch }}
 
     strategy:
       matrix:
