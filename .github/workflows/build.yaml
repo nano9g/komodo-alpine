@@ -95,9 +95,6 @@ jobs:
           repository: ${{ env.KOMODO_REPO }}
           ref: ${{ needs.release-check.outputs.komodo_tag }}
           path: komodo
-    
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Prepare
         shell: bash
@@ -126,6 +123,9 @@ jobs:
           # Artifact testing (avoid build step)
           echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_$RUNNER_ARCH"
 
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      
       # - name: Build Komodo binaries
       #   working-directory: ${{ github.workspace }}/komodo
       #   run: |
