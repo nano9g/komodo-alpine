@@ -79,9 +79,6 @@ jobs:
     needs: release-check
     if: needs.release-check.outputs.should_run == 'true'
 
-    env:
-      BUILD_PLATFORM: linux/${{ matrix.job.arch }}
-
     strategy:
       matrix:
         include:
@@ -102,6 +99,8 @@ jobs:
       - name: Prepare
         shell: bash
         working-directory: ${{ github.workspace }}/komodo
+        env:
+          BUILD_PLATFORM: linux/${{ matrix.arch }}
         run: |
           echo "BUILD_PLATFORM: $BUILD_PLATFORM"
 
