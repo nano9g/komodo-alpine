@@ -131,6 +131,7 @@ jobs:
       - name: Build Komodo binaries
         working-directory: ${{ github.workspace }}/komodo
         run: |
+          echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
           docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
