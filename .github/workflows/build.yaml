@@ -149,7 +149,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-without-markdown
+          name: komodo-alpine-${{ runner.arch }}
           path: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
           retention-days: 1
           overwrite: true
