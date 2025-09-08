@@ -51,17 +51,23 @@ jobs:
           komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
           
           our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+          tag_to_create=$komodo_tag
 
-          if [[ "$komodo_tag" != "$our_tag" ]]; then
+          # Force run for testing
+          tag_to_create=$(date +%s)
+          
+          if [[ "$komodo_tag" != "$tag_to_create" ]]; then
             should_run=true
           fi
 
           echo "Komodo tag: $komodo_tag"
           echo "Our tag: $our_tag"
+          echo "Tag to create: $tag_to_create"
           echo "Should run?: $should_run"
 
           echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
           echo "komodo_release_url=${komodo_release_url}" >> $GITHUB_OUTPUT
+          echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
 
 
@@ -178,8 +184,8 @@ jobs:
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git tag -l
-          git tag -a "${{ needs.release-check.outputs.komodo_tag }}" -m ":lizard: ${{ needs.release-check.outputs.komodo_tag }}"
-          git push origin ${{ needs.release-check.outputs.komodo_tag }}
+          git tag -a "${{ needs.release-check.outputs.tag_to_create }}" -m ":lizard: Komodo ${{ needs.release-check.outputs.komodo_tag }}"
+          git push origin ${{ needs.release-check.outputs.tag_to_create }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -189,7 +195,7 @@ jobs:
             
             Refer to the [official Komodo release](${{ needs.release-check.outputs.komodo_release_url }}) for changelog and other platforms.
           files: ${{ github.workspace }}/artifacts/*
-          tag_name: ${{ needs.release-check.outputs.komodo_tag }}
+          tag_name: ${{ needs.release-check.outputs.tag_to_create }}
 
       - name: Delete artifacts
         uses: joutvhu/delete-artifact@v2
