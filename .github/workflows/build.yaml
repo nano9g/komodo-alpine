@@ -158,7 +158,9 @@ jobs:
   create-release:
     name: Create release
     runs-on: ubuntu-latest
-    needs: komodo-build
+    needs:
+      - release-check
+      - komodo-build
     permissions:
       actions: write
       contents: write
