@@ -79,9 +79,7 @@ jobs:
             arch: amd64
           - os: ubuntu-24.04-arm
             arch: arm64
-    
-    env:
-      GH_TOKEN: ${{ github.token }}
+
     steps:
 
       - name: Checkout current Komodo release
@@ -118,14 +116,13 @@ jobs:
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
-          # Release testing (avoid build step)
-          # echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_aarch64"
-          # echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_amd64"
+          # Artifact testing (avoid build step)
+          echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_$RUNNER_ARCH"
 
-      - name: Build Komodo binaries
-        working-directory: ${{ github.workspace }}/komodo
-        run: |
-          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+      # - name: Build Komodo binaries
+      #   working-directory: ${{ github.workspace }}/komodo
+      #   run: |
+      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_<architecture>" suffix beforehand
@@ -150,6 +147,7 @@ jobs:
           retention-days: 1
           overwrite: true
 
+
   create-release:
     name: Create release
     runs-on: ubuntu-latest
@@ -157,6 +155,8 @@ jobs:
     permissions:
       actions: write
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
       - name: Download artifacts
