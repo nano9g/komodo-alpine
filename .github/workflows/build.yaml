@@ -68,11 +68,18 @@ jobs:
   # Actual builds, only invoked when release-check says it's needed
   komodo-build:
     name: Build and release
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: release-check
     if: needs.release-check.outputs.should_run == 'true'
-    permissions:
-      contents: write
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -83,9 +90,6 @@ jobs:
           repository: ${{ env.KOMODO_REPO }}
           ref: ${{ needs.release-check.outputs.komodo_tag }}
           path: komodo
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
     
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -126,7 +130,6 @@ jobs:
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_<architecture>" suffix beforehand
       - name: Compress artifacts
-        id: compress
         working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         run: |
           for filename in ./*; do
@@ -139,6 +142,29 @@ jobs:
               mv $newname $filename
           done
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-without-markdown
+          path: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
+          retention-days: 1
+          overwrite: true
+
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    needs: komodo-build
+    permissions:
+      actions: write
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: ${{ github.workspace }}/artifacts
+          merge-multiple: true
+    
       - name: Checkout this repo
         uses: actions/checkout@v4
         with:
@@ -162,5 +188,12 @@ jobs:
             These are prebuilt [Komodo](https://komo.do) binaries for Alpine.
             
             Refer to the [official Komodo release](${{ needs.release-check.outputs.komodo_release_url }}) for changelog and other platforms.
-          files: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
+          files: ${{ github.workspace }}/artifacts/*
           tag_name: ${{ needs.release-check.outputs.komodo_tag }}
+
+      - name: Delete artifacts
+        uses: joutvhu/delete-artifact@v2
+        # uses: geekyeggo/delete-artifact@v5
+        # with:
+        #   name: "*"
+        #   useGlob: true
