@@ -49,13 +49,13 @@ jobs:
           komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
           komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
           
-          our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
           tag_to_create=$komodo_tag
-
           # Force run for testing
           #tag_to_create=$(date +%s)
           
-          if [[ "$komodo_tag" != "$tag_to_create" ]]; then
+          our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+
+          if [[ "$our_tag" != "$tag_to_create" ]]; then
             should_run=true
           fi
 
