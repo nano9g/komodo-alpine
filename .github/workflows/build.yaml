@@ -138,14 +138,14 @@ jobs:
           docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
-      # renaming to remove the "_<architecture>" suffix beforehand
-      # (so periphery_amd64 will be named periphery in the archive)
+      # renaming to remove the "_musl_<architecture>" suffix beforehand
+      # (so periphery_musl_amd64 will be named periphery in the archive)
       - name: Compress artifacts
         working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
         run: |
           for filename in ./*; do
               [ -e "$filename" ] || continue
-              newname=${filename%_*}
+              newname=${filename%_musl_*}
               archive="${filename}.tar.gz"
               mv $filename $newname
               echo $archive
