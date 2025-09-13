@@ -10,12 +10,9 @@ outputs:
   komodo_tag:
     description: "Latest Komodo release tag"
     value: ${{ steps.check.komodo_tag }}
-  should_run:
+  our_latest_tag:
     description: "Newest release tag of this repo"
     value: ${{ steps.check.our_latest_tag }}
-  should_run:
-    description: "Whether a new build is needed"
-    value: ${{ steps.check.should_run }}
 runs:
   using: "composite"
   steps:
