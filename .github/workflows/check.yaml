@@ -20,33 +20,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load environment
-        run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
-    
       - name: Check for new version
         id: check
-        shell: bash
-        run: |
-          # Compare our release tag with that of the official Komodo repo to see if a new build is needed
-          should_run=false
+        uses: ./.github/actions/hello-world-composite-action
+        with:
+          who-to-greet: 'Mona the Octocat'
 
-          latest_komodo_release=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases?per_page=1")
-          komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
-          komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
+      # - name: Load environment
+      #   run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
+    
+      # - name: Check for new version
+      #   id: check
+      #   shell: bash
+      #   run: |
+      #     # Compare our release tag with that of the official Komodo repo to see if a new build is needed
+      #     should_run=false
+
+      #     latest_komodo_release=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases?per_page=1")
+      #     komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
+      #     komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
           
-          our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+      #     our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
 
-          if [[ "$our_tag" != "$komodo_tag" ]]; then
-            should_run=true
-          fi
+      #     if [[ "$our_tag" != "$komodo_tag" ]]; then
+      #       should_run=true
+      #     fi
 
-          echo "Komodo tag: $komodo_tag"
-          echo "Our latest tag: $our_tag"
-          echo "Should run?: $should_run"
+      #     echo "Komodo tag: $komodo_tag"
+      #     echo "Our latest tag: $our_tag"
+      #     echo "Should run?: $should_run"
 
-          echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
-          echo "komodo_release_url=${komodo_release_url}" >> $GITHUB_OUTPUT
-          echo "should_run=${should_run}" >> $GITHUB_OUTPUT
+      #     echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
+      #     echo "komodo_release_url=${komodo_release_url}" >> $GITHUB_OUTPUT
+      #     echo "should_run=${should_run}" >> $GITHUB_OUTPUT
 
       - name: Update build.env and trigger workflow
         if: ${{ steps.check.outputs.should_run == 'true' }}
