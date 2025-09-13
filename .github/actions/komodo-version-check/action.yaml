@@ -1,0 +1,66 @@
+name: 'Komodo Version Check'
+description: 'Find the latest Komodo release and compare it with the latest Alpine release'
+outputs:
+  build_env:
+    description: "Build environment"
+    value: ${{ steps.load-environment.outputs.build_env }}
+  should_run:
+    description: "Whether a new build is needed"
+    value: ${{ steps.check.should_run }}
+  komodo_tag:
+    description: "Latest Komodo release tag"
+    value: ${{ steps.check.komodo_tag }}
+  should_run:
+    description: "Newest release tag of this repo"
+    value: ${{ steps.check.our_latest_tag }}
+  should_run:
+    description: "Whether a new build is needed"
+    value: ${{ steps.check.should_run }}
+runs:
+  using: "composite"
+  steps:
+
+      - name: Load environment
+        id: load-environment
+        run: |
+          # Download build environment file, remove comments and blank lines
+          build_env=$(curl -Lf --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/workflows/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
+        
+          echo "$build_env"
+
+          # Action output
+          echo 'foo<<EOF' >> $GITHUB_OUTPUT
+          echo $build_env >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+          # Also make available to subsequent steps
+          echo "$build_env" >> $GITHUB_ENV
+    
+      - name: Check for new version
+        id: check
+        shell: bash
+        run: |
+          # Compare our release tag with that of the official Komodo repo to see if a new build is needed
+          should_run=false
+
+          latest_komodo_release=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/latest")
+          komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
+          if [[ -z "$komodo_tag" ]]; then
+            echo "Failed get latest Komodo tag"
+          fi
+
+          # Using ?per-page=1 instead of /latest to avoid 404 for very first build
+          our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+
+          if [[ "$our_tag" != "$komodo_tag" ]]; then
+            should_run=true
+          fi
+
+          echo "Komodo tag: $komodo_tag"
+          echo "Our latest tag: $our_tag"
+          echo "Should run?: $should_run"
+
+          echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
+          echo "our_latest_tag=${our_tag}" >> $GITHUB_OUTPUT
+          echo "should_run=${should_run}" >> $GITHUB_OUTPUT
+  
