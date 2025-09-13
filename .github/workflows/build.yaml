@@ -3,32 +3,21 @@ run-name: Build Komodo binaries for Alpine
 
 on:
   # There's no way to trigger on push to another repo, so we're going to run the
-  # release-check job periodically, which will determine whether the rest of the
+  # run-check job periodically, which will determine whether the rest of the
   # workflow needs to run
-  schedule:
-    - cron: '15 */4 * * *'
+  # schedule:
+  #   - cron: '15 */4 * * *'
 
   workflow_dispatch:
-
-env:
-  KOMODO_REPO: moghtech/komodo
-  
-  # Path (in the Komodo repo) to the file that will be passed to "docker buildx build"
-  BINARIES_DOCKERFILE: bin/binaries.Dockerfile
-  
-  # Lines to remove from the Dockerfile for things we aren't building
-  # (Will be used in a regex, so separate multiple items with a pipe |)
-  # Matching "cargo build -p komodo_<DOCKERFILE_CARGO_BUILD_REMOVE> --release && \"
-  DOCKERFILE_CARGO_BUILD_REMOVE: 'core|cli'
-  # Matching "COPY --from=builder /builder/target/release/<DOCKERFILE_COPY_FROM_BUILDER_REMOVE> /km"
-  DOCKERFILE_COPY_FROM_BUILDER_REMOVE: 'core|km'
-  
-  # Rust Alpine Docker image tag suffix (rust:X.Y.Z-alpineX.Y)
-  ALPINE_IMAGE_TAG: alpine3.22
+    inputs:
+      force_run:
+        description: 'Force run'
+        required: false
+        type: boolean
 
 jobs:
-  # This is the lightweight job that runs and decides whether to perform builds
-  release-check:
+  # Before the build can run, we need to get some info to (among other things) be sure it's not going to try and duplicate an existing tag
+  run-check:
     name: Komodo version check
     runs-on: ubuntu-latest
     outputs:
@@ -38,6 +27,12 @@ jobs:
       tag_to_create: ${{ steps.check.outputs.tag_to_create }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment
+        run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
+
       - name: Check
         id: check
         shell: bash
@@ -45,15 +40,16 @@ jobs:
           # Compare our release tag with that of the official Komodo repo to see if a new build is needed
           should_run=false
 
-          latest_komodo_release=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases?per_page=1")
-          komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
-          komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
+          komodo_release_info=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/tags/${BUILD_VERSION}")
+          komodo_release_url=$(echo "$komodo_release_info" | jq -r '.[0].html_url')
           
-          tag_to_create=$komodo_tag
+          tag_to_create=$BUILD_VERSION
           # Force run for testing
-          #tag_to_create=$(date +%s)
+          if [[ "${{ inputs.force_run }}" == "true" ]]; then
+            tag_to_create="${tag_to_create}-$(date +%s)"
+          fi
           
-          our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+          our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
 
           if [[ "$our_tag" != "$tag_to_create" ]]; then
             should_run=true
@@ -70,12 +66,12 @@ jobs:
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
 
 
-  # Actual builds, only invoked when release-check says it's needed
+  # Actual builds, only invoked when run-check says it's needed
   komodo-build:
     name: Build and release
     runs-on: ${{ matrix.os }}
-    needs: release-check
-    if: needs.release-check.outputs.should_run == 'true'
+    needs: run-check
+    if: needs.run-check.outputs.should_run == 'true'
     
     env:
       BUILD_PLATFORM: linux/${{ matrix.arch }}
@@ -92,12 +88,16 @@ jobs:
             arch: arm64
 
     steps:
+      - name: Load environment
+        run: |
+          build_env=$()
+          grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
 
       - name: Checkout current Komodo release
         uses: actions/checkout@v4
         with:
           repository: ${{ env.KOMODO_REPO }}
-          ref: ${{ needs.release-check.outputs.komodo_tag }}
+          ref: ${{ needs.run-check.outputs.komodo_tag }}
           path: komodo
 
       - name: Prepare
@@ -167,7 +167,7 @@ jobs:
     name: Create release
     runs-on: ubuntu-latest
     needs:
-      - release-check
+      - run-check
       - komodo-build
     permissions:
       actions: write
@@ -182,7 +182,7 @@ jobs:
           path: ${{ github.workspace }}/artifacts
           merge-multiple: true
     
-      - name: Checkout this repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           path: komodo-alpine
@@ -195,8 +195,8 @@ jobs:
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git tag -l
-          git tag -a "${{ needs.release-check.outputs.tag_to_create }}" -m ":lizard: Komodo ${{ needs.release-check.outputs.komodo_tag }}"
-          git push origin ${{ needs.release-check.outputs.tag_to_create }}
+          git tag -a "${{ needs.run-check.outputs.tag_to_create }}" -m ":lizard: Komodo ${{ needs.run-check.outputs.komodo_tag }}"
+          git push origin ${{ needs.run-check.outputs.tag_to_create }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -204,9 +204,9 @@ jobs:
           body: |
             These are prebuilt [Komodo](https://komo.do) binaries for Alpine.
             
-            Refer to the [official Komodo release](${{ needs.release-check.outputs.komodo_release_url }}) for changelog and other platforms.
+            Refer to the [official Komodo release](${{ needs.run-check.outputs.komodo_release_url }}) for changelog and other platforms.
           files: ${{ github.workspace }}/artifacts/*
-          tag_name: ${{ needs.release-check.outputs.tag_to_create }}
+          tag_name: ${{ needs.run-check.outputs.tag_to_create }}
 
       # No reason to keep uploaded artifacts around since they've just been attached to the release
       - name: Delete artifacts
