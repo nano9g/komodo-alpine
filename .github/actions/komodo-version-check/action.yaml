@@ -29,7 +29,7 @@ runs:
           echo "$build_env"
 
           # Action output
-          echo 'foo<<EOF' >> $GITHUB_OUTPUT
+          echo 'build_env<<EOF' >> $GITHUB_OUTPUT
           echo $build_env >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
