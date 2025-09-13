@@ -22,9 +22,7 @@ jobs:
 
       - name: Check for new version
         id: check
-        uses: ./.github/actions/hello-world-composite-action
-        with:
-          who-to-greet: 'Mona the Octocat'
+        uses: ./.github/actions/komodo-version-check
 
       # - name: Load environment
       #   run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
