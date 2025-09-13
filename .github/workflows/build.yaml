@@ -132,7 +132,6 @@ jobs:
           mkdir -p $OUTPUT_FOLDER
 
           # Update Dockerfile
-          dockerfile=${{ needs.run-check.outputs.komodo_tag }}
           echo -e "-----\nModified $BINARIES_DOCKERFILE\n------\n"
           # Build using the Alpine image (obvs)
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
