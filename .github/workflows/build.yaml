@@ -2,12 +2,6 @@ name: komodo-alpine-build
 run-name: Build Komodo binaries for Alpine
 
 on:
-  # There's no way to trigger on push to another repo, so we're going to run the
-  # run-check job periodically, which will determine whether the rest of the
-  # workflow needs to run
-  # schedule:
-  #   - cron: '15 */4 * * *'
-
   workflow_dispatch:
     inputs:
       force_run:
@@ -21,49 +15,79 @@ jobs:
     name: Komodo version check
     runs-on: ubuntu-latest
     outputs:
-      should_run: ${{ steps.check.outputs.should_run }}
+      build_env: ${{ steps.check.outputs.build_env }}
       komodo_tag: ${{ steps.check.outputs.komodo_tag }}
       komodo_release_url: ${{ steps.check.outputs.komodo_release_url }}
-      tag_to_create: ${{ steps.check.outputs.tag_to_create }}
+      should_run: ${{ steps.verify.outputs.should_run }}
+      tag_to_create: ${{ steps.verify.outputs.tag_to_create }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load environment
-        run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
-
-      - name: Check
+      - name: Check for new version
         id: check
+        uses: ./.github/actions/komodo-version-check
+
+      - name: Load environment
         shell: bash
         run: |
-          # Compare our release tag with that of the official Komodo repo to see if a new build is needed
-          should_run=false
+          echo "${{ steps.check.outputs.build_env }}" >> $GITHUB_ENV
 
-          komodo_release_info=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/tags/${BUILD_VERSION}")
-          komodo_release_url=$(echo "$komodo_release_info" | jq -r '.[0].html_url')
-          
+      - name: Verify run decision
+        id: verify
+        shell: bash
+        run: |
+          should_run=${{ steps.check.outputs.should_run }}
           tag_to_create=$BUILD_VERSION
-          # Force run for testing
-          if [[ "${{ inputs.force_run }}" == "true" ]]; then
-            tag_to_create="${tag_to_create}-$(date +%s)"
+
+          if [[ "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
+            if [[ "${{ inputs.force_run }}" == "true" ]]; then
+              tag_to_create="${tag_to_create}-$(date +%s)"
+            else
+              echo "🛑 Tag ${tag_to_create} already exists."
+              exit 1
+            fi
           fi
-          
-          our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
-
-          if [[ "$our_tag" != "$tag_to_create" ]]; then
-            should_run=true
-          fi
-
-          echo "Komodo tag: $komodo_tag"
-          echo "Our latest tag: $our_tag"
-          echo "Tag to create: $tag_to_create"
-          echo "Should run?: $should_run"
-
-          echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
-          echo "komodo_release_url=${komodo_release_url}" >> $GITHUB_OUTPUT
-          echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
+  
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
+          echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
+          echo "komodo_release_url=https://github.com/$KOMODO_REPO/releases/tag/${{ steps.check.outputs.komodo_tag }}" >> $GITHUB_OUTPUT
+
+      # - name: Load environment
+      #   run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
+
+      # - name: Check
+      #   id: check
+      #   shell: bash
+      #   run: |
+      #     # Compare our release tag with that of the official Komodo repo to see if a new build is needed
+      #     should_run=false
+
+      #     komodo_release_info=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/tags/${BUILD_VERSION}")
+      #     komodo_release_url=$(echo "$komodo_release_info" | jq -r '.[0].html_url')
+          
+      #     tag_to_create=$BUILD_VERSION
+      #     # Force run for testing
+      #     if [[ "${{ inputs.force_run }}" == "true" ]]; then
+      #       tag_to_create="${tag_to_create}-$(date +%s)"
+      #     fi
+          
+      #     our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+
+      #     if [[ "$our_tag" != "$tag_to_create" ]]; then
+      #       should_run=true
+      #     fi
+
+      #     echo "Komodo tag: $komodo_tag"
+      #     echo "Our latest tag: $our_tag"
+      #     echo "Tag to create: $tag_to_create"
+      #     echo "Should run?: $should_run"
+
+      #     echo "komodo_tag=${komodo_tag}" >> $GITHUB_OUTPUT
+      #     echo "komodo_release_url=${komodo_release_url}" >> $GITHUB_OUTPUT
+      #     echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
+      #     echo "should_run=${should_run}" >> $GITHUB_OUTPUT
 
 
   # Actual builds, only invoked when run-check says it's needed
@@ -89,9 +113,9 @@ jobs:
 
     steps:
       - name: Load environment
+        shell: bash
         run: |
-          build_env=$()
-          grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
+          echo "${{ needs.run-check.outputs.build_env }}" >> $GITHUB_ENV
 
       - name: Checkout current Komodo release
         uses: actions/checkout@v4
@@ -108,6 +132,7 @@ jobs:
           mkdir -p $OUTPUT_FOLDER
 
           # Update Dockerfile
+          dockerfile=${{ needs.run-check.outputs.komodo_tag }}
           echo -e "-----\nModified $BINARIES_DOCKERFILE\n------\n"
           # Build using the Alpine image (obvs)
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
@@ -176,6 +201,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
+          
       - name: Download artifacts
         uses: actions/download-artifact@v5
         with:
