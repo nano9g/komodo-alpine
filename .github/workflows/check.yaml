@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Load environment
-        run: cat .github/workflows/build.env >> $GITHUB_ENV
+        run: grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env >> $GITHUB_ENV
     
       - name: Check for new version
         id: check
