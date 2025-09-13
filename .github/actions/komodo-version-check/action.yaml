@@ -30,11 +30,11 @@ runs:
 
           # Action output
           echo 'build_env<<EOF' >> $GITHUB_OUTPUT
-          echo $build_env >> $GITHUB_OUTPUT
+          printf %s\\n "$build_env" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
           # Also make available to subsequent steps
-          echo "$build_env" >> $GITHUB_ENV
+          printf %s\\n "$build_env" >> $GITHUB_ENV
     
       - name: Check for new version
         id: check
