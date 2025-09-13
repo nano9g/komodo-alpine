@@ -32,7 +32,7 @@ jobs:
       - name: Load environment
         shell: bash
         run: |
-          echo "${{ steps.check.outputs.build_env }}" >> $GITHUB_ENV
+          printf %s\\n "${{ steps.check.outputs.build_env }}" >> $GITHUB_ENV
 
       - name: Verify run decision
         id: verify
