@@ -19,6 +19,7 @@ runs:
 
       - name: Load environment
         id: load-environment
+        shell: bash
         run: |
           # Download build environment file, remove comments and blank lines
           build_env=$(curl -Lf --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/workflows/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
