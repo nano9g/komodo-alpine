@@ -34,7 +34,7 @@ jobs:
           komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
           komodo_release_url=$(echo "$latest_komodo_release" | jq -r '.[0].html_url')
           
-          our_tag=$(curl --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+          our_tag=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
 
           if [[ "$our_tag" != "$komodo_tag" ]]; then
             should_run=true
