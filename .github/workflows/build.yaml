@@ -41,13 +41,12 @@ jobs:
           should_run=${{ steps.check.outputs.should_run }}
           tag_to_create=$BUILD_VERSION
 
-          if [[ "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
-            if [[ "${{ inputs.force_run }}" == "true" ]]; then
-              tag_to_create="${tag_to_create}-$(date +%s)"
-            else
-              echo "🛑 Tag ${tag_to_create} already exists."
-              exit 1
-            fi
+          if [[ "${{ inputs.force_run }}" == "true" ]]; then
+            echo "Forcing run with timestamped tag"
+            tag_to_create="${tag_to_create}-$(date +%s)"
+          elif [[ "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
+            echo "🛑 Tag ${tag_to_create} already exists."
+            exit 1
           fi
   
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
