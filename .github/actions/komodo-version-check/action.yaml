@@ -44,7 +44,7 @@ runs:
           should_run=false
 
           latest_komodo_release=$(curl -Lf --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/latest")
-          komodo_tag=$(echo "$latest_komodo_release" | jq -r '.[0].tag_name')
+          komodo_tag=$(echo "$latest_komodo_release" | jq -r '.tag_name')
           if [[ -z "$komodo_tag" ]]; then
             echo "Failed get latest Komodo tag"
           fi
