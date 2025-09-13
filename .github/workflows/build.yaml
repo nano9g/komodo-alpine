@@ -44,6 +44,7 @@ jobs:
           if [[ "${{ inputs.force_run }}" == "true" ]]; then
             echo "Forcing run with timestamped tag"
             tag_to_create="${tag_to_create}-$(date +%s)"
+            should_run=true
           elif [[ "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
             echo "🛑 Tag ${tag_to_create} already exists."
             exit 1
