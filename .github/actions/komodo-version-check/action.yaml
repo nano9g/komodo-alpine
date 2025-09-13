@@ -6,13 +6,13 @@ outputs:
     value: ${{ steps.load-environment.outputs.build_env }}
   should_run:
     description: "Whether a new build is needed"
-    value: ${{ steps.check.should_run }}
+    value: ${{ steps.check.outputs.should_run }}
   komodo_tag:
     description: "Latest Komodo release tag"
-    value: ${{ steps.check.komodo_tag }}
+    value: ${{ steps.check.outputs.komodo_tag }}
   our_latest_tag:
     description: "Newest release tag of this repo"
-    value: ${{ steps.check.our_latest_tag }}
+    value: ${{ steps.check.outputs.our_latest_tag }}
 runs:
   using: "composite"
   steps:
