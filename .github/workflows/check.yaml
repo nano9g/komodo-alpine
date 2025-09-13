@@ -49,7 +49,7 @@ jobs:
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
 
       - name: Update build.env and trigger workflow
-        if: ${ steps.check.outputs.should_run == 'true' }
+        if: ${{ steps.check.outputs.should_run == 'true' }}
         shell: bash
         run: |
           sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=${{ steps.check.outputs.komodo_tag }}/" .github/workflows/build.env
