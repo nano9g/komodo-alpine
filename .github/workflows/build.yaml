@@ -21,7 +21,7 @@ jobs:
     outputs:
       build_env: ${{ steps.check.outputs.build_env }}
       komodo_tag: ${{ steps.check.outputs.komodo_tag }}
-      komodo_release_url: ${{ steps.check.outputs.komodo_release_url }}
+      komodo_release_url: ${{ steps.verify.outputs.komodo_release_url }}
       should_run: ${{ steps.verify.outputs.should_run }}
       tag_to_create: ${{ steps.verify.outputs.tag_to_create }}
 
