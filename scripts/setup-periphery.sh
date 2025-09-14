@@ -14,7 +14,7 @@ PERIPHERY_CONFIG_PATH="${PERIPHERY_CONFIG_DIR}/periphery.config.toml"
 PERIPHERY_ARCHIVE_PREFIX="periphery_musl"  # Will be suffixed with _<architecture>.tar.gz
 
 # Service file content
-IFS='' read -r -d '' PERIPHERY_OPENRC_SERVICE <<EOF
+PERIPHERY_OPENRC_SERVICE=$(cat <<EOF
 #!/sbin/openrc-run
 
 description="Komodo Periphery Agent"
@@ -26,6 +26,7 @@ pidfile=/run/periphery.pid
 output_log=/var/log/komodo.log
 output_err=/var/log/komodo.err
 EOF
+)
 
 
 # Permissions check
@@ -36,7 +37,7 @@ if [ "$(id -u)" -ne 0 ]; then printf %s\\n "Please run as root." >&2; exit 1; fi
 distro=$(cat /etc/*-release | grep -e '^ID' | head -n1 | cut -d '=' -f2)
 if [ "$distro" != 'alpine' ]; then
 	printf %s\\n "🐧 This is $distro -- running standard Periphery installer"
-	curl -sSL "KOMODO_DEFAULT_PERIPHERY_SCRIPT_URL" | python3
+	curl -sSL "$KOMODO_DEFAULT_PERIPHERY_SCRIPT_URL" | python3
 	exit
 fi
 
