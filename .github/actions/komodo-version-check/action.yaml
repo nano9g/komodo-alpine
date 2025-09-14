@@ -21,10 +21,10 @@ runs:
         shell: bash
         run: |
           # Import, removing comments and blank lines
-          build_env=$(grep -v -e '^[[:space:]]*$' -e '^#' .github/workflows/build.env)
+          build_env=$(grep -v -e '^[[:space:]]*$' -e '^#' .github/env/build.env)
           
           # Download build environment file, remove comments and blank lines
-          #build_env=$(curl -Lf --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/workflows/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
+          #build_env=$(curl -Lf --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/env/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
         
           echo "$build_env"
 
