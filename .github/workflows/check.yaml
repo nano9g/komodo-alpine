@@ -26,8 +26,13 @@ jobs:
         id: check
         uses: ./.github/actions/komodo-version-check
 
-      - name: Update build.env and trigger workflow
-        if: ${{ steps.check.outputs.should_run == 'true' }}
+      - name: Load environment
+        shell: bash
+        run: |
+          printf %s\\n "${{ steps.check.outputs.build_env }}" >> $GITHUB_ENV
+
+      - name: Update build.env
+        if: ${{ steps.check.outputs.should_run == 'true' && env.BUILD_VERSION != steps.check.outputs.komodo_tag }}
         shell: bash
         run: |
           build_env=".github/env/build.env"
@@ -35,30 +40,45 @@ jobs:
           # Set current version
           sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=${{ steps.check.outputs.komodo_tag }}/" "$build_env"
 
-          env_update_prefix="# Updated by komodo-release-check"
-          env_update_tagline="${env_update_prefix} $(date)"
-
+          # Disabled due to push limitations using GITHUB_TOKEN https://github.com/orgs/community/discussions/25702
+          # (Using repository_dispatch instead)
+          #
           # When we need the build workflow to run, we'll always update the build environment with a timestamp
           # so there's something to commit (allows a single trigger)
-
+          #
+          # env_update_prefix="# Updated by komodo-release-check"
+          # env_update_tagline="${env_update_prefix} $(date)"
+          #
           # Replace existing tagline or append to end of file if not found
           # Credit: https://superuser.com/a/976712
-          sed -i -e "
-            /^${env_update_prefix}/{
-              h
-              s/.*/${env_update_tagline}/
-            }
-            \${
-              x
-              /^$/{
-                s//\n${env_update_tagline}/
-                H
-              }
-              x
-            }" "$build_env"
+          # sed -i -e "
+          #   /^${env_update_prefix}/{
+          #     h
+          #     s/.*/${env_update_tagline}/
+          #   }
+          #   \${
+          #     x
+          #     /^$/{
+          #       s//\n${env_update_tagline}/
+          #       H
+          #     }
+          #     x
+          #   }" "$build_env"
           
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git add "$build_env"
-          git commit -m "Build ${{ steps.check.outputs.komodo_tag }}"
-          git push
+          if [ ! -z "$(git status --porcelain=v1 2>/dev/null)" ]; then
+            git commit -m "Build ${{ steps.check.outputs.komodo_tag }}"
+            git push
+          fi
+
+      - name: Trigger Build Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'build-trigger',
+            });
