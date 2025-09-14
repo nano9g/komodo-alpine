@@ -87,7 +87,7 @@ jobs:
       - name: Load environment
         shell: bash
         run: |
-          echo "${{ needs.run-check.outputs.build_env }}" >> $GITHUB_ENV
+          printf %s\\n "${{ needs.run-check.outputs.build_env }}" >> $GITHUB_ENV
 
       - name: Checkout current Komodo release
         uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILE
-          sed -i -E '/COPY.*--from/s/$/_musl_$TARGETARCH/' $BINARIES_DOCKERFILE
+          sed -i -E "/COPY.*--from/s/$/_musl_$TARGETARCH/" $BINARIES_DOCKERFILE
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
@@ -172,7 +172,6 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-          
       - name: Download artifacts
         uses: actions/download-artifact@v5
         with:
