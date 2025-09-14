@@ -2,11 +2,9 @@ name: komodo-release-check
 run-name: Check for new Komodo release
 
 on:
-  # There's no way to trigger on push to another repo, so we're going to run
-  # this job periodically. If there's a new version, the build.env file will
-  # be updated and pushed, which will trigger the build workflow.
-  # schedule:
-  #   - cron: '15 */4 * * *'
+  # There's no way to trigger on releases in another repo, so we're polling instead
+  schedule:
+    - cron: '15 */4 * * *'
 
   workflow_dispatch:  
 
@@ -73,7 +71,7 @@ jobs:
             git push
           fi
 
-      - name: Trigger Build Workflow
+      - name: Trigger komodo-alpine-build
         uses: actions/github-script@v7
         with:
           script: |
