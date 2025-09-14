@@ -30,7 +30,7 @@ jobs:
         if: ${{ steps.check.outputs.should_run == 'true' }}
         shell: bash
         run: |
-          build_env=".github/workflows/build.env"
+          build_env=".github/env/build.env"
 
           # Set current version
           sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=${{ steps.check.outputs.komodo_tag }}/" "$build_env"
