@@ -199,7 +199,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: |
-            These are prebuilt [Komodo](https://komo.do) binaries for Alpine.
+            These are ***unofficial*** prebuilt [Komodo](https://komo.do) binaries for Alpine.
             
             Refer to the [official Komodo release](${{ needs.run-check.outputs.komodo_release_url }}) for changelog and other platforms.
           files: ${{ github.workspace }}/artifacts/*
