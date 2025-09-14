@@ -115,7 +115,8 @@ jobs:
           sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILE
-          sed -i -E "/COPY.*--from/s/$/_musl_$TARGETARCH/" $BINARIES_DOCKERFILE
+          # This must be single-quoted because the variable is a Dockerfile variable, not a Bash one
+          sed -i -E '/COPY.*--from/s/$/_musl_$TARGETARCH/' $BINARIES_DOCKERFILE
           # Output for logging
           cat $BINARIES_DOCKERFILE
 
