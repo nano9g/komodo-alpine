@@ -2,9 +2,9 @@ name: komodo-alpine-build
 run-name: Build Komodo binaries for Alpine
 
 on:
-  # push:
-  #   paths:
-  #     - .github/env/build.env
+  # Called from komodo-version-check workflow
+  repository_dispatch:
+    types: [build-trigger]
 
   workflow_dispatch:
     inputs:
