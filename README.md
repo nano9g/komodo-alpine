@@ -8,7 +8,7 @@ This repository builds automated ***unofficial*** [Komodo](https://komo.do) bina
 
 At this time, only Periphery is available. The `km` CLI could be added if there’s enough demand.
 
-## Installation
+## Periphery Installation
 
 ### Script
 
