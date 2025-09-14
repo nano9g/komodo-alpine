@@ -107,8 +107,8 @@ jobs:
           echo -e "-----\nModified $BINARIES_DOCKERFILE\n------\n"
           # Build using the Alpine image (obvs)
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
-          # Alpine build deps
-          sed -i "/^WORKDIR \/builder/i ARG TARGETARCH\nRUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
+          # Alpine build deps (and extra arguments)
+          sed -i "/^FROM rust:/i ARG TARGETARCH\nRUN apk add --no-cache musl-dev\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
           # Preserve continuations for build commands (&& \) to avoid errors if things are reordered
           sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo "Skipping \1"\2/' $BINARIES_DOCKERFILE
