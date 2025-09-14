@@ -72,6 +72,7 @@ jobs:
           fi
 
       - name: Trigger komodo-alpine-build
+        if: ${{ steps.check.outputs.should_run == 'true' }}
         uses: actions/github-script@v7
         with:
           script: |
