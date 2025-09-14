@@ -28,7 +28,32 @@ jobs:
         if: ${{ steps.check.outputs.should_run == 'true' }}
         shell: bash
         run: |
-          sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=${{ steps.check.outputs.komodo_tag }}/" .github/workflows/build.env
+          build_env=".github/workflows/build.env"
+
+          # Set current version
+          sed -i "s/BUILD_VERSION=.*/BUILD_VERSION=${{ steps.check.outputs.komodo_tag }}/" "$build_env"
+
+          env_update_prefix="# Updated by komodo-release-check"
+          env_update_tagline="${env_update_prefix} $(date)"
+
+          # When we need the build workflow to run, we'll always update the build environment with a timestamp
+          # so there's something to commit (allows a single trigger)
+
+          # Replace existing tagline or append to end of file if not found
+          # Credit: https://superuser.com/a/976712
+          sed -i -e "
+            /^${env_update_prefix}/{
+              h
+              s/.*/${env_update_tagline}/
+            }
+            \${
+              x
+              /^$/{
+                s//\n${env_update_tagline}/
+                H
+              }
+              x
+            }" "$build_env"
           
           git config --global user.name '${{ github.actor }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
