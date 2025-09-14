@@ -2,6 +2,10 @@ name: komodo-alpine-build
 run-name: Build Komodo binaries for Alpine
 
 on:
+  push:
+    paths:
+      - .github/workflows/build.env
+
   workflow_dispatch:
     inputs:
       force_run:
