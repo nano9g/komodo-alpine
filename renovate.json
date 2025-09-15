@@ -10,7 +10,7 @@
       "matchStrings": ["ALPINE_IMAGE_TAG=(?<currentValue>[\\w.]+)"],
       "depNameTemplate": "rust:{{currentValue}}",
       "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
+      "versioningTemplate": "regex:^(alpine(?<major>\\d+)\\.(?<minor>\\d+)(?<patch>\\.\\d+)?)?$"
     }
   ]
 }
