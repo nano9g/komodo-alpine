@@ -1,4 +1,4 @@
-# _Unofficial_ Komodo Binaries for Alpine 🏔️♡🦎
+# _Unofficial_ Komodo Binaries for Alpine
 [![Latest Release](https://img.shields.io/github/v/release/nano9g/komodo-alpine?logo=alpinelinux)](https://github.com/nano9g/komodo-alpine/releases/latest)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/nano9g/komodo-alpine/build.yaml?logo=alpinelinux&label=build)](https://github.com/nano9g/komodo-alpine/actions/workflows/build.yaml)
 [![Last Version Check](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fnano9g%2Fkomodo-alpine%2Factions%2Fworkflows%2F189020361%2Fruns%3Fstatus%3Dcompleted%26per_page%3D1&query=%24.workflow_runs%5B0%5D.run_started_at&label=%F0%9F%A6%8E%20version%20checked&color=989499)](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml)
