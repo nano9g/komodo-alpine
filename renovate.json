@@ -6,7 +6,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^build\\.env$/"],
+      "managerFilePatterns": ["/(^|/)build\\.env$/"],
       "matchStrings": ["ALPINE_IMAGE_TAG=(?<currentValue>[\\w.]+)"],
       "depNameTemplate": "rust",
       "datasourceTemplate": "docker",
