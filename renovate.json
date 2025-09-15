@@ -8,7 +8,7 @@
       "customType": "regex",
       "managerFilePatterns": ["/(^|/)build\\.env$/"],
       "matchStrings": ["ALPINE_IMAGE_TAG=(?<currentValue>[\\w.]+)"],
-      "depNameTemplate": "rust:{{currentValue}}",
+      "depNameTemplate": "rust",
       "datasourceTemplate": "docker",
       "versioningTemplate": "regex:^(alpine(?<major>\\d+)\\.(?<minor>\\d+)(?<patch>\\.\\d+)?)?$"
     }
