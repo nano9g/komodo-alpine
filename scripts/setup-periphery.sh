@@ -77,7 +77,7 @@ local_version_outdated() {
 		if [ "$_local_version_number" = "$remote_version_number" ]; then
 			_force_required_reason="☑️ Local Periphery binary is already ${remote_version_number}"
 			_force_required_action="reinstall"
-		elif  [ "$( { printf %s\\n "$_local_version_number"; printf %s\\n "$_local_version_number"; } | sort -n -t. -k1,1 -k2,2 -k3,3 | tail -n1 )" = "$_local_version_number" ]; then
+		elif  [ "$( { printf %s\\n "$_local_version_number"; printf %s\\n "$remote_version_number"; } | sort -n -t. -k1,1 -k2,2 -k3,3 | tail -n1 )" = "$_local_version_number" ]; then
 			# Local version > Remote version
 			# Credit: https://gist.github.com/knu/c4db76e3cc596d788edd60dac596432d
 			_force_required_reason="🔺 Local Periphery binary is NEWER than remote (${_local_version_number} > ${remote_version_number})"
