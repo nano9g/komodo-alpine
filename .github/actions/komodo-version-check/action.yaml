@@ -3,7 +3,8 @@ description: 'Find the latest Komodo release and compare it with the latest Alpi
 inputs:
   token:
     description: "GitHub token"
-    required: true
+    required: false
+    default: ${{ github.token }}
 outputs:
   build_env:
     description: "Build environment"
