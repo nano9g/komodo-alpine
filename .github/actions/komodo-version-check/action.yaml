@@ -24,7 +24,8 @@ runs:
           build_env=$(grep -v -e '^[[:space:]]*$' -e '^#' .github/env/build.env)
           
           # Download build environment file, remove comments and blank lines
-          #build_env=$(curl -Lf --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/env/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
+          # (Not using this since checkout is required to use an action)
+          #build_env=$(curl -Lf --no-progress-meter "https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_SHA}/.github/env/build.env" | grep -v -e '^[[:space:]]*$' -e '^#')
         
           echo "$build_env"
 
@@ -43,14 +44,18 @@ runs:
           # Compare our release tag with that of the official Komodo repo to see if a new build is needed
           should_run=false
 
-          latest_komodo_release=$(curl -Lf --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' --no-progress-meter "${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/latest")
+          komodo_url="${GITHUB_API_URL}/repos/${KOMODO_REPO}/releases/latest"
+          echo "🦎 ${komodo_url}"
+          latest_komodo_release=$(curl -Lf --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' --no-progress-meter "$komodo_url")
           komodo_tag=$(echo "$latest_komodo_release" | jq -r '.tag_name')
           if [[ -z "$komodo_tag" ]]; then
             echo "Failed get latest Komodo tag"
           fi
 
           # Using ?per-page=1 instead of /latest to avoid 404 for very first build
-          our_tag=$(curl -Lf --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' --no-progress-meter "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1" | jq -r '.[0].tag_name')
+          alpine_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases?per_page=1"
+          echo "🏔️ ${alpine_url}"
+          our_tag=$(curl -Lf --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' --no-progress-meter "$alpine_url" | jq -r '.[0].tag_name')
 
           if [[ "$our_tag" != "$komodo_tag" ]]; then
             should_run=true
