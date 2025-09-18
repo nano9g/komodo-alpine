@@ -14,7 +14,7 @@ At this time, only Periphery is available. The `km` CLI could be added if there�
 
 The official Periphery install script doesn’t know about these binaries, nor can it deal with OpenRC services. You can use the script in this repository to install and it will do the right thing; musl+OpenRC on Alpine and running the official script for other platforms.
 
-✴️ This requires root permissions, so apply `doas` or `sudo` as needed.
+✴️ This requires root permissions, so apply `doas` or `sudo` after the pipe as needed.
 
 ```
 curl -sSL https://raw.githubusercontent.com/nano9g/komodo-alpine/main/scripts/setup-periphery.sh | /bin/sh
