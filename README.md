@@ -62,7 +62,7 @@ curl -sSL https://raw.githubusercontent.com/nano9g/komodo-alpine/main/scripts/se
 
 ### How (and how often) are binaries produced?
 
-Every 4 hours, [the latest Komodo release is checked](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml). If a new one is avaialble, [builds are compiled and uploaded](https://github.com/nano9g/komodo-alpine/actions/workflows/build.yaml) to a new release in this repo.
+Every 4 hours, [the latest Komodo release is checked](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml). If a new one is avaialble, [builds are automatically compiled and uploaded](https://github.com/nano9g/komodo-alpine/actions/workflows/build.yaml) to a new release in this repo.
 
 ### Why is this needed?
 
