@@ -106,6 +106,7 @@ install_service() {
 		# Service wasn't present, or install was forced
 		printf %s\\n "🧩 Installing Periphery service to ${PERIPHERY_OPENRC_SERVICE_PATH}"
 		printf %s\\n "$PERIPHERY_OPENRC_SERVICE" > "$PERIPHERY_OPENRC_SERVICE_PATH"
+  		chown root:root "$PERIPHERY_OPENRC_SERVICE_PATH"
 		chmod +x "$PERIPHERY_OPENRC_SERVICE_PATH"
 		return 1
 	else
@@ -134,6 +135,10 @@ install_binary() {
 	fi
 
 	if [ "$_proceed" = "1" ]; then
+		# Protect config file
+  		chown root:root "$PERIPHERY_CONFIG_PATH"
+  		chmod 600 "$PERIPHERY_CONFIG_PATH"
+   	
 		# Download binary
 		mkdir -p $PERIPHERY_TMP_DIR
 		tmp_archive_path="${PERIPHERY_TMP_DIR}/${PERIPHERY_ARCHIVE}"
@@ -162,6 +167,7 @@ install_binary() {
 		service periphery stop 2>/dev/null || true
 		# Install binary
 		mv "$tmp_binary_path" "$PERIPHERY_BINARY_PATH"
+  		chown root:root "$PERIPHERY_BINARY_PATH"
 		chmod +x "$PERIPHERY_BINARY_PATH"
 		return 1
 	fi
