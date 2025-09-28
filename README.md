@@ -4,9 +4,7 @@
 [![Last Version Check](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fnano9g%2Fkomodo-alpine%2Factions%2Fworkflows%2F189020361%2Fruns%3Fstatus%3Dcompleted%26per_page%3D1&query=%24.workflow_runs%5B0%5D.run_started_at&label=%F0%9F%A6%8E%20version%20checked&color=989499)](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml)
 [![Komodo Release](https://img.shields.io/github/v/release/moghtech/komodo?label=%F0%9F%A6%8E%20latest&color=rgba(160%2C%20170%2C%20160%2C%200.7)&labelColor=rgba(60%2C%2070%2C%2060%2C%200.7))](https://github.com/moghtech/komodo/releases/latest)
 
-This repository builds automated ***unofficial*** [Komodo](https://komo.do) binaries for Alpine.
-
-At this time, only Periphery is available. The `km` CLI could be added if there’s enough demand.
+This repository automatically builds ***unofficial*** musl binaries of [Komodo](https://komo.do) Periphery for those who use Alpine as a Docker host.
 
 ## Periphery Installation
 
@@ -62,7 +60,7 @@ curl -sSL https://raw.githubusercontent.com/nano9g/komodo-alpine/main/scripts/se
 
 ### How (and how often) are binaries produced?
 
-Every 4 hours, [the latest Komodo release is checked](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml). If a new one is avaialble, [builds are automatically compiled and uploaded](https://github.com/nano9g/komodo-alpine/actions/workflows/build.yaml) to a new release in this repo.
+Every 4 hours, [the latest Komodo version is checked](https://github.com/nano9g/komodo-alpine/actions/workflows/check.yaml). If a new one is avaialble, [builds are automatically compiled and uploaded](https://github.com/nano9g/komodo-alpine/actions/workflows/build.yaml) to a new release in this repo.
 
 ### Why is this needed?
 
