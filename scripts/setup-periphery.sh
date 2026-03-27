@@ -135,10 +135,6 @@ install_binary() {
 	fi
 
 	if [ "$_proceed" = "1" ]; then
-		# Protect config file
-  		chown root:root "$PERIPHERY_CONFIG_PATH"
-  		chmod 600 "$PERIPHERY_CONFIG_PATH"
-   	
 		# Download binary
 		mkdir -p $PERIPHERY_TMP_DIR
 		tmp_archive_path="${PERIPHERY_TMP_DIR}/${PERIPHERY_ARCHIVE}"
@@ -177,6 +173,10 @@ install_binary() {
 
 install_config() {
 	_force=$1
+
+	# Ensure directory exists
+	mkdir -p "$PERIPHERY_CONFIG_DIR"
+	
 	# Never overwrite config unless explicitly requested
 	if [ -f "$PERIPHERY_CONFIG_PATH" ] && [ "$_force" != "1" ]; then
 		return 0
@@ -193,6 +193,13 @@ install_config() {
 		exit $result
 	fi
 	return 1
+}
+
+
+protect_config() {
+	# There may be sensitive info in the config file, so limit access to root
+	chown root:root "$PERIPHERY_CONFIG_PATH"
+	chmod 600 "$PERIPHERY_CONFIG_PATH"
 }
 
 
@@ -285,6 +292,7 @@ install_binary $do_binary_install
 binary_updated=$?
 install_config $overwrite_config
 config_updated=$?
+protect_config
 
 # Enable and start service if needed
 rc-update show default | grep periphery > /dev/null 2>&1
