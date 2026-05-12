@@ -196,7 +196,7 @@ jobs:
           git push origin ${{ needs.run-check.outputs.tag_to_create }}
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: |
             These are ***unofficial*** prebuilt [Komodo](https://komo.do) binaries for Alpine.
