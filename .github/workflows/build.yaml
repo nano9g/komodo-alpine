@@ -9,7 +9,11 @@ on:
   workflow_dispatch:
     inputs:
       force_run:
-        description: 'Force run'
+        description: 'Force run with timestamped tag'
+        required: false
+        type: boolean
+      skip_build:
+        description: 'Skip the actual build (artifact testing)'
         required: false
         type: boolean
 
@@ -24,6 +28,7 @@ jobs:
       komodo_release_url: ${{ steps.verify.outputs.komodo_release_url }}
       should_run: ${{ steps.verify.outputs.should_run }}
       tag_to_create: ${{ steps.verify.outputs.tag_to_create }}
+      skip_build: ${{ steps.verify.outputs.skip_build }}
 
     steps:
       - name: Checkout
@@ -47,7 +52,7 @@ jobs:
 
           if [[ "${{ inputs.force_run }}" == "true" ]]; then
             echo "Forcing run with timestamped tag"
-            tag_to_create="${tag_to_create}-$(date +%s)"
+            tag_to_create="${tag_to_create}-$(date +%s)-TESTING"
             should_run=true
           elif [[  "$should_run" == "true" && "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
             echo "🛑 Tag ${tag_to_create} already exists."
@@ -59,6 +64,7 @@ jobs:
   
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
           echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
+          echo "skip_build=${{ inputs.force_run }}" >> $GITHUB_OUTPUT
           echo "komodo_release_url=https://github.com/$KOMODO_REPO/releases/tag/${{ steps.check.outputs.komodo_tag }}" >> $GITHUB_OUTPUT
 
 
@@ -121,12 +127,17 @@ jobs:
           cat $BINARIES_DOCKERFILE
 
           # Artifact testing (avoid build step)
-          #echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_$RUNNER_ARCH"
+          if [[ "${{ needs.run-check.outputs.skip_build }}" == "true" ]]; then
+            echo "⏭️ Skipping build"
+            echo "test" > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_musl_$RUNNER_ARCH"
+          fi
 
       - name: Set up Docker Buildx
+        if: needs.run-check.outputs.skip_build != 'true'
         uses: docker/setup-buildx-action@v4
       
       - name: Build Komodo binaries
+        if: needs.run-check.outputs.skip_build != 'true'
         working-directory: ${{ github.workspace }}/komodo
         run: |
           echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
@@ -151,7 +162,7 @@ jobs:
           done
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: komodo-alpine-${{ runner.arch }}
           path: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}/*.tar.gz
@@ -174,7 +185,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: ${{ github.workspace }}/artifacts
           merge-multiple: true
