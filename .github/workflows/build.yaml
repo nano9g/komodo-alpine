@@ -52,7 +52,7 @@ jobs:
 
           if [[ "${{ inputs.force_run }}" == "true" ]]; then
             echo "Forcing run with timestamped tag"
-            tag_to_create="${tag_to_create}-$(date +%s)"
+            tag_to_create="${tag_to_create}-$(date +%s)-TESTING"
             should_run=true
           elif [[  "$should_run" == "true" && "$tag_to_create" == "${{ steps.check.outputs.our_latest_tag }}" ]]; then
             echo "🛑 Tag ${tag_to_create} already exists."
@@ -132,25 +132,18 @@ jobs:
             echo "test" > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_musl_$RUNNER_ARCH"
           fi
 
-      - name: Test build skip
-        shell: bash
+      - name: Set up Docker Buildx
+        if: needs.run-check.outputs.skip_build != 'true'
+        uses: docker/setup-buildx-action@v4
+      
+      - name: Build Komodo binaries
         if: needs.run-check.outputs.skip_build != 'true'
         working-directory: ${{ github.workspace }}/komodo
         run: |
-          echo "BUILD WAS NOT SKIPPED"
-
-      # - name: Set up Docker Buildx
-      #   if: needs.run-check.outputs.skip_build != 'true'
-      #   uses: docker/setup-buildx-action@v4
-      
-      # - name: Build Komodo binaries
-      #   if: needs.run-check.outputs.skip_build != 'true'
-      #   working-directory: ${{ github.workspace }}/komodo
-      #   run: |
-      #     echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
-      #     # Outputting to local causes the final COPY lines in the Dockerfile to copy
-      #     # files into the specified dest instead of the scratch image.
-      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+          echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
+          # Outputting to local causes the final COPY lines in the Dockerfile to copy
+          # files into the specified dest instead of the scratch image.
+          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_musl_<architecture>" suffix beforehand
