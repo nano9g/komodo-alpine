@@ -9,7 +9,11 @@ on:
   workflow_dispatch:
     inputs:
       force_run:
-        description: 'Force run'
+        description: 'Force run with timestamped tag'
+        required: false
+        type: boolean
+      skip_build:
+        description: 'Skip the actual build (artifact testing)'
         required: false
         type: boolean
 
@@ -121,12 +125,16 @@ jobs:
           cat $BINARIES_DOCKERFILE
 
           # Artifact testing (avoid build step)
-          #echo "." > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_$RUNNER_ARCH"
+          if [[ "${{ inputs.skip_build }}" == "true" ]]; then
+            echo "test" > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_musl_$RUNNER_ARCH"
+          fi
 
       - name: Set up Docker Buildx
+        if: inputs.skip_build != 'true'
         uses: docker/setup-buildx-action@v4
       
       - name: Build Komodo binaries
+        if: inputs.skip_build != 'true'
         working-directory: ${{ github.workspace }}/komodo
         run: |
           echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
