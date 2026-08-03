@@ -28,6 +28,7 @@ jobs:
       komodo_release_url: ${{ steps.verify.outputs.komodo_release_url }}
       should_run: ${{ steps.verify.outputs.should_run }}
       tag_to_create: ${{ steps.verify.outputs.tag_to_create }}
+      skip_build: ${{ steps.verify.outputs.skip_build }}
 
     steps:
       - name: Checkout
@@ -63,6 +64,7 @@ jobs:
   
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
           echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
+          echo "skip_build=${{ inputs.force_run }}" >> $GITHUB_OUTPUT
           echo "komodo_release_url=https://github.com/$KOMODO_REPO/releases/tag/${{ steps.check.outputs.komodo_tag }}" >> $GITHUB_OUTPUT
 
 
@@ -125,22 +127,30 @@ jobs:
           cat $BINARIES_DOCKERFILE
 
           # Artifact testing (avoid build step)
-          if [[ "${{ inputs.skip_build }}" == "true" ]]; then
+          if [[ "${{ needs.run-check.outputs.skip_build }}" == "true" ]]; then
+            echo "⏭️ Skipping build"
             echo "test" > "$GITHUB_WORKSPACE/komodo/$OUTPUT_FOLDER/periphery_musl_$RUNNER_ARCH"
           fi
 
-      - name: Set up Docker Buildx
-        if: inputs.skip_build != 'true'
-        uses: docker/setup-buildx-action@v4
-      
-      - name: Build Komodo binaries
-        if: inputs.skip_build != 'true'
+      - name: Test build skip
+        shell: bash
+        if: needs.run-check.outputs.skip_build != 'true'
         working-directory: ${{ github.workspace }}/komodo
         run: |
-          echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
-          # Outputting to local causes the final COPY lines in the Dockerfile to copy
-          # files into the specified dest instead of the scratch image.
-          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+          echo "BUILD WAS NOT SKIPPED"
+
+      # - name: Set up Docker Buildx
+      #   if: needs.run-check.outputs.skip_build != 'true'
+      #   uses: docker/setup-buildx-action@v4
+      
+      # - name: Build Komodo binaries
+      #   if: needs.run-check.outputs.skip_build != 'true'
+      #   working-directory: ${{ github.workspace }}/komodo
+      #   run: |
+      #     echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
+      #     # Outputting to local causes the final COPY lines in the Dockerfile to copy
+      #     # files into the specified dest instead of the scratch image.
+      #     docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_musl_<architecture>" suffix beforehand
