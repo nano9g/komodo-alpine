@@ -106,9 +106,9 @@ jobs:
         working-directory: ${{ github.workspace }}/komodo
         shell: bash
         run: |
-          echo "Environment:"
-          printenv | sort
-          echo ""
+          #echo "Environment:"
+          #printenv | sort
+          #echo ""
           
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
