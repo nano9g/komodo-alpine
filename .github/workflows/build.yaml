@@ -64,7 +64,7 @@ jobs:
   
           echo "should_run=${should_run}" >> $GITHUB_OUTPUT
           echo "tag_to_create=${tag_to_create}" >> $GITHUB_OUTPUT
-          echo "skip_build=${{ inputs.force_run }}" >> $GITHUB_OUTPUT
+          echo "skip_build=${{ inputs.skip_build }}" >> $GITHUB_OUTPUT
           echo "komodo_release_url=https://github.com/$KOMODO_REPO/releases/tag/${{ steps.check.outputs.komodo_tag }}" >> $GITHUB_OUTPUT
 
 
@@ -103,22 +103,26 @@ jobs:
           path: komodo
 
       - name: Prepare
-        shell: bash
         working-directory: ${{ github.workspace }}/komodo
+        shell: bash
         run: |
+          #echo "Environment:"
+          #printenv | sort
+          #echo ""
+          
           echo "Creating build artifact folder"
           mkdir -p $OUTPUT_FOLDER
 
           # Update Dockerfile
-          echo -e "-----\nModified $BINARIES_DOCKERFILE\n------\n"
+          echo -e "-----\nModified ${BINARIES_DOCKERFILE}\n------\n"
           # Build using the Alpine image (obvs)
           sed -i -E "s/(^FROM rust:[^-]+-)([^ ]+) /\1${ALPINE_IMAGE_TAG} /" $BINARIES_DOCKERFILE
           # Alpine build deps (and extra arguments)
           sed -i "/^FROM rust:/a ARG TARGETARCH\nRUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
-          # Preserve continuations for build commands (&& \) to avoid errors if things are reordered
-          sed -i -E 's/cargo build.*komodo_(core|cli) --release(.*)?/echo "Skipping \1"\2/' $BINARIES_DOCKERFILE
-          sed -i -E '/COPY.*--from.*\/(core|km)/d' $BINARIES_DOCKERFILE
+          # (Build commands aren replaced with a log message so continuations '&& \' are preserved to avoid errors if things are reordered)
+          sed -i -E "s/cargo build.*komodo_(${DOCKERFILE_CARGO_BUILD_REMOVE}) --release(.*)?/echo 'Skipping \1'\2/" $BINARIES_DOCKERFILE
+          sed -i -E "/COPY.*--from.*\/(${DOCKERFILE_COPY_FROM_BUILDER_REMOVE})/d" $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILE
           # This must be single-quoted because the variable is a Dockerfile variable, not a Bash one
@@ -139,17 +143,23 @@ jobs:
       - name: Build Komodo binaries
         if: needs.run-check.outputs.skip_build != 'true'
         working-directory: ${{ github.workspace }}/komodo
+        shell: bash
         run: |
-          echo "Building from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
+          echo "Building ${BUILD_VERSION/v} from $BINARIES_DOCKERFILE for $BUILD_PLATFORM"
           # Outputting to local causes the final COPY lines in the Dockerfile to copy
           # files into the specified dest instead of the scratch image.
-          docker buildx build -f $BINARIES_DOCKERFILE --platform $BUILD_PLATFORM --output type=local,dest=$OUTPUT_FOLDER .
+          docker buildx build \
+            -f $BINARIES_DOCKERFILE \
+            --platform $BUILD_PLATFORM \
+            --build-arg VERSION=${BUILD_VERSION/v} \
+            --output type=local,dest=$OUTPUT_FOLDER .
       
       # Compress each executable in the build folder into its own .tar.gz,
       # renaming to remove the "_musl_<architecture>" suffix beforehand
       # (so periphery_musl_amd64 will be named periphery in the archive)
       - name: Compress artifacts
         working-directory: ${{ github.workspace }}/komodo/${{ env.OUTPUT_FOLDER }}
+        shell: bash
         run: |
           for filename in ./*; do
               [ -e "$filename" ] || continue
@@ -196,8 +206,8 @@ jobs:
           path: komodo-alpine
 
       - name: Create tag
-        shell: bash
         working-directory: ${{ github.workspace }}/komodo-alpine
+        shell: bash
         run: |
           cd $GITHUB_WORKSPACE/komodo-alpine
           git config --global user.name '${{ github.actor }}'
