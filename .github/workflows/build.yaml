@@ -117,7 +117,7 @@ jobs:
           sed -i "/^FROM rust:/a ARG TARGETARCH\nRUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig\n" $BINARIES_DOCKERFILE
           # Remove commands for things we're not building
           # Preserve continuations for build commands (&& \) to avoid errors if things are reordered
-          sed -i -E "s/cargo build.*komodo_($DOCKERFILE_COPY_FROM_BUILDER_REMOVE) --release(.*)?/echo 'Skipping \1'\2/" $BINARIES_DOCKERFILE
+          sed -i -E "s/cargo build.*komodo_($DOCKERFILE_CARGO_BUILD_REMOVE) --release(.*)?/echo 'Skipping \1'\2/" $BINARIES_DOCKERFILE
           sed -i -E "/COPY.*--from.*\/($DOCKERFILE_COPY_FROM_BUILDER_REMOVE)/d" $BINARIES_DOCKERFILE
           # Add architecture suffixes to artifacts
           sed -i -E '/^FROM scratch/a ARG TARGETARCH' $BINARIES_DOCKERFILE
